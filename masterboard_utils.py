@@ -5,7 +5,7 @@ from time import clock, sleep
 import math
 '''This file collects a set of usefull functions to maniputate a master_board_sdk object'''
 class GotoController():
-    def __init__(self,robot_if,nb_motors,dt,T_move=1.0, T_static=30.0,Kp = 2.0,Kd = 0.05,imax=3.0):
+    def __init__(self,robot_if,nb_motors,dt,T_move=1.0, T_static=5.0,Kp = 2.0,Kd = 0.05,imax=3.0,FinalPosition=None):
         '''
         Control motors to reach a given position 'pos' in T_move seconds, 
         then hold this position for T_static seconds
@@ -14,7 +14,10 @@ class GotoController():
         self.robot_if = robot_if
         self.dt = dt  
 
-        self.FinalPosition = nb_motors * [0.]
+        if (FinalPosition==None):
+            self.FinalPosition = nb_motors * [0.]
+        else:
+            self.FinalPosition = FinalPosition
         self.InitialPosition = nb_motors * [0.]
         self.dt = dt
 
@@ -31,6 +34,7 @@ class GotoController():
         self.T_static = T_static
         
         self.t = 0.0
+
     def ManageControl(self):
         self.t+=self.dt
         for motor in range(self.nb_motors):
@@ -61,9 +65,9 @@ class GotoController():
 
 class CalibrationController():
     '''Control motors to find encoders index'''
-    POSITIVE = 0
-    NEGATIVE = 1
-    ALTERNATIVE = 2
+    POSITIVE = +1
+    NEGATIVE = -1
+    ALTERNATIVE = 0
     def __init__(self, robot_if, nb_motors, dt, Kp = 2.0,Kd = 0.05,imax=3.0,searchStrategy=None ):
         self.nb_motors = nb_motors
         self.robot_if = robot_if
@@ -108,13 +112,13 @@ class CalibrationController():
                         T=2.0
                         if (self.searchStrategy[motor] == self.ALTERNATIVE):
                             if (self.t<T/2.0):
-                                calib_traj = self.InitialPosition[motor]+math.pi*0.5*(1-math.cos(2*math.pi*(1./T)*self.t))
+                                calib_traj = self.InitialPosition[motor]+1.2*math.pi*0.5*(1-math.cos(2*math.pi*(1./T)*self.t))
                             else:
-                                calib_traj = self.InitialPosition[motor]+math.pi*math.cos(2*math.pi*(0.5/T)*(self.t-T/2.0))
+                                calib_traj = self.InitialPosition[motor]+1.2*math.pi*math.cos(2*math.pi*(0.5/T)*(self.t-T/2.0))
                         elif (self.searchStrategy[motor] == self.POSITIVE):
-                            calib_traj = self.InitialPosition[motor]+math.pi*1*(1-math.cos(2*math.pi*(0.5/T)*self.t))
+                            calib_traj = self.InitialPosition[motor]+1.2*math.pi*1*(1-math.cos(2*math.pi*(0.5/T)*self.t))
                         elif (self.searchStrategy[motor] == self.NEGATIVE):
-                            calib_traj = self.InitialPosition[motor]-math.pi*1*(1-math.cos(2*math.pi*(0.5/T)*self.t))
+                            calib_traj = self.InitialPosition[motor]-1.2*math.pi*1*(1-math.cos(2*math.pi*(0.5/T)*self.t))
                         self.control[motor] = self.Kp*(calib_traj - self.robot_if.GetMotor(motor).GetPosition() - self.Kd*self.robot_if.GetMotor(motor).GetVelocity())
                 #*** END OF STATE MACHINE ***
 
