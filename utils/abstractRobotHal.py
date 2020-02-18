@@ -18,7 +18,7 @@ class RobotHAL():
         self.gearRatio = np.array([9.]*8)  # gearbox ratio
         self.motorKt = np.array([0.02]*8)  # Nm/A
 
-        self.maximumCurrent = 1.0  # A
+        self.maximumCurrent = 3.0  # A
         # To get this offsets, run the calibration with self.encoderOffsets at 0,
         # then manualy move the robot in zero config, and paste the position here (note the negative sign!)
         self.encoderOffsets = - \
@@ -27,7 +27,8 @@ class RobotHAL():
         #self.encoderOffsets *= 0.
         # ***********************************
  
-    def __init__(self, interfaceName="eth0", dt=0.001, calibrateEncoders=False, logSize=0):
+    def __init__(self, interfaceName="eth0", dt=0.001):
+        self.isInitialized = False
         self.InitRobotSpecificParameters()
         '''
         assert len(self.motorToUrdf) == self.nb_motors
@@ -58,7 +59,6 @@ class RobotHAL():
         self.cpt = 0
         self.last = 0
         self.dt = dt
-        self.logSize = logSize
         self.nb_motorDrivers = int(self.nb_motors/2)
         self.gearRatioSigned = np.zeros(8)
         self.gearRatioSigned = self.motorSign * self.gearRatio
@@ -73,26 +73,20 @@ class RobotHAL():
         self.calibCtrl = CalibrationController(self.hardware, self.nb_motors, self.dt, Kd=0.01, Kp=3.0 ,searchStrategy=searchStrategy)
         self.gotoCtrl = GotoController(self.hardware, self.nb_motors, self.dt, Kd=0.01, Kp=3.0)
 
-        #Allocate log 
-        if self.logSize>0:
-            self.log_q_mes = np.zeros([self.logSize,self.nb_motors])
-            self.log_v_mes = np.zeros([self.logSize,self.nb_motors])
-            self.log_baseOrientation = np.zeros([self.logSize,4])
-            self.log_baseAngularVelocity = np.zeros([self.logSize,3])
-            self.log_baseLinearAcceleration = np.zeros([self.logSize,3])
-
+    def init(self,calibrateEncoders=False):
         # Initialization of the interface between the computer and the master board
         self.hardware.Init()
-        if (calibrateEncoders):
+        self.EnableAllMotors()
+        self.isInitialized = True
+        if calibrateEncoders:
             for i in range(self.nb_motors):
                 self.hardware.GetMotor(i).SetPositionOffset(self.encoderOffsets[i])
                 self.hardware.GetMotor(i).enable_index_offset_compensation = True
-        self.EnableAllMotors()
-
-        if calibrateEncoders:
             print("Running calibration...")
             self.RunHommingRoutine()
             print("End Of Calibration")
+        
+
 
     def IMUeulerToBaseQuaternion(self, roll, pitch, yaw):
         sr = np.sin(roll/2.)
@@ -145,33 +139,26 @@ class RobotHAL():
                     i).GetVelocity()/self.gearRatioSigned[i]
 
         # /!\ Robot specific, TODO orientation of the IMU needs to be a robot specific parameter !
-        # Angular velocities of the base from IMU Gyroscope
-        self.baseAngularVelocity[:] = (self.hardware.imu_data_gyroscope(0),
-                                       self.hardware.imu_data_gyroscope(1),
-                                       self.hardware.imu_data_gyroscope(2))
+        # Angular velocities of the base from IMU Gyroscope, note the rotation ! 
+        self.baseAngularVelocity[:] = (+self.hardware.imu_data_gyroscope(1),
+                                       +self.hardware.imu_data_gyroscope(0),
+                                       -self.hardware.imu_data_gyroscope(2))
 
-        # Orientation of the base from IMU Estimation Filter
+        # Orientation of the base from IMU Estimation Filter, note the rotation !    
         self.baseOrientation[:] = self.IMUeulerToBaseQuaternion(self.hardware.imu_data_attitude(0),
                                                                 self.hardware.imu_data_attitude(1),
                                                                 self.hardware.imu_data_attitude(2))
 
-        # Linear Acceleration of the base from IMU Estimation Filter                                                 
-        self.baseLinearAcceleration[:] = (self.hardware.imu_data_linear_acceleration(0),
-                                          self.hardware.imu_data_linear_acceleration(1),
-                                          self.hardware.imu_data_linear_acceleration(2))
-
-        
-        if (self.cpt<self.logSize):
-            self.log_q_mes[self.cpt] = self.q_mes
-            self.log_v_mes[self.cpt] = self.v_mes
-            self.log_baseOrientation[self.cpt] = self.baseOrientation
-            self.log_baseAngularVelocity[self.cpt] = self.baseAngularVelocity
-            self.log_baseLinearAcceleration[self.cpt] = self.baseLinearAcceleration
+        # Linear Acceleration of the base from IMU Estimation Filter, note the rotation !                                                 
+        self.baseLinearAcceleration[:] = (+self.hardware.imu_data_linear_acceleration(1),
+                                          +self.hardware.imu_data_linear_acceleration(0),
+                                          -self.hardware.imu_data_linear_acceleration(2))
 
         return
 
     def SendCommand(self, WaitEndOfCycle=True):
         '''This (possibly blocking) fuction will send the command packet to the robot'''
+        assert self.isInitialized, "The Robot HAL is not initialized. You have to call init() first"
         self.hardware.SendCommand()
         if WaitEndOfCycle:
             self.WaitEndOfCycle()
