@@ -27,9 +27,8 @@ class NonBlockingViewerFromRobot():
 
 
 class viewerClient():
-    def __init__(self,urdf="",modelPath= "/opt/openrobots/lib/python3.5/site-packages/../../../share/example-robot-data/robots",dt=0.01):
+    def __init__(self,urdf="/opt/openrobots/lib/python3.5/site-packages/../../../share/example-robot-data/robots/solo_description/robots/solo.urdf",modelPath="/opt/openrobots/lib/python3.5/site-packages/../../../share/example-robot-data/robots",dt=0.01):
         pin.switchToNumpyMatrix()
-        urdf = modelPath + "/solo_description/robots/solo.urdf"
         robot = pin.RobotWrapper.BuildFromURDF( urdf, modelPath, pin.JointModelFreeFlyer())
         robot.initDisplay(loadModel=True)   
         if ('viewer' in robot.viz.__dict__):
