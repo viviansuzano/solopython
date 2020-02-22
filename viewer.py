@@ -54,18 +54,7 @@ while ((not device.hardware.IsTimeout()) and  device.cpt < experimentTime):
 
 #let the user interact with the logger data
 embed()
-np.savez("data.npz",q_mes=logger.q_mes, 
-                    v_mes=logger.v_mes, 
-                    baseOrientation=logger.baseOrientation,
-                    baseAngularVelocity=logger.baseAngularVelocity,
-                    baseLinearAcceleration=logger.baseLinearAcceleration,
-                    mocapPosition=logger.mocapPosition,
-                    mocapVelocity=logger.mocapVelocity,
-                    mocapOrientationMat9=logger.mocapOrientationMat9,
-                    mocapOrientationQuat=logger.mocapOrientationQuat)
-
-
-
+logger.saveAll("data.npz")
 
 # Shut down the interface between the computer and the master board
 device.hardware.Stop()

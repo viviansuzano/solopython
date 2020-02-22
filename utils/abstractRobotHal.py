@@ -66,6 +66,7 @@ class RobotHAL():
 
         self.q_mes = np.zeros(self.nb_motors)
         self.v_mes = np.zeros(self.nb_motors)
+        self.torquesFromCurrentMeasurment = np.zeros(self.nb_motors)
         self.baseAngularVelocity = np.zeros(3)
         self.baseOrientation = np.array([0., 0., 0., 1.])
         self.baseLinearAcceleration = np.zeros(3)
@@ -133,10 +134,9 @@ class RobotHAL():
         for i in range(self.nb_motors):
             # TODO check integrity differently
             if self.hardware.GetMotor(i).IsEnabled():
-                self.q_mes[self.motorToUrdf[i]] = self.hardware.GetMotor(
-                    i).GetPosition()/self.gearRatioSigned[i]
-                self.v_mes[self.motorToUrdf[i]] = self.hardware.GetMotor(
-                    i).GetVelocity()/self.gearRatioSigned[i]
+                self.q_mes[self.motorToUrdf[i]] = self.hardware.GetMotor(i).GetPosition()/self.gearRatioSigned[i]
+                self.v_mes[self.motorToUrdf[i]] = self.hardware.GetMotor(i).GetVelocity()/self.gearRatioSigned[i]
+                self.torquesFromCurrentMeasurment[self.motorToUrdf[i]] = self.hardware.GetMotor(i).GetCurrent()*self.jointKtSigned[i]
 
         # /!\ Robot specific, TODO orientation of the IMU needs to be a robot specific parameter !
         # Angular velocities of the base from IMU Gyroscope, note the rotation ! 

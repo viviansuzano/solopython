@@ -10,6 +10,7 @@ class Logger():
         #allocate the data:
         self.q_mes = np.zeros([logSize,nb_motors])
         self.v_mes = np.zeros([logSize,nb_motors])
+        self.torquesFromCurrentMeasurment = np.zeros([logSize,nb_motors])
         self.baseOrientation = np.zeros([logSize,4])
         self.baseAngularVelocity = np.zeros([logSize,3])
         self.baseLinearAcceleration = np.zeros([logSize,3])
@@ -31,7 +32,7 @@ class Logger():
         self.baseOrientation[self.i] = device.baseOrientation
         self.baseAngularVelocity[self.i] = device.baseAngularVelocity
         self.baseLinearAcceleration[self.i] = device.baseLinearAcceleration
-
+        self.torquesFromCurrentMeasurment[self.i] = device.torquesFromCurrentMeasurment
         #Logging from qualisys
         if qualisys is not None:
             self.mocapPosition[self.i] = qualisys.getPosition()
@@ -39,4 +40,16 @@ class Logger():
             self.mocapOrientationMat9[self.i] = qualisys.getOrientationMat9()
             self.mocapOrientationQuat[self.i] = qualisys.getOrientationQuat()
         self.i+=1
+
+    def saveAll(self, fileName = "data.npz"):
+        np.savez(fileName,  q_mes=self.q_mes, 
+                            v_mes=self.v_mes,
+                            torquesFromCurrentMeasurment = self.torquesFromCurrentMeasurment,
+                            baseOrientation=self.baseOrientation,
+                            baseAngularVelocity=self.baseAngularVelocity,
+                            baseLinearAcceleration=self.baseLinearAcceleration,
+                            mocapPosition=self.mocapPosition,
+                            mocapVelocity=self.mocapVelocity,
+                            mocapOrientationMat9=self.mocapOrientationMat9,
+                            mocapOrientationQuat=self.mocapOrientationQuat)
         
