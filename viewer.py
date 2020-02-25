@@ -3,7 +3,7 @@ import argparse
 import math
 from time import clock, sleep
 from masterboard_utils import *
-from utils.abstractRobotHal import RobotHAL
+from solo8 import Solo8
 from utils.viewerClient import viewerClient
 from utils.qualisysClient import QualisysClient
 from utils.logger import Logger
@@ -16,7 +16,7 @@ q_viewer = np.array([0.,0.,0.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.,0.,0.])
 name_interface = "enp4s2f1"
 viewer = viewerClient()
 qualisys = QualisysClient("140.93.16.160",7)
-device = RobotHAL(name_interface, dt=0.001)
+device = Solo8(name_interface, dt=0.001)
 logger = Logger(device,qualisys,logSize)
 
 Kp = 0.3
@@ -24,7 +24,7 @@ Kd = 0.0
 q_ref = np.array([1,-1,1,-1,-1,1,-1,1])
 
 #From now one, we should not allocate memory !!
-device.init(calibrateEncoders=True)
+device.init(calibrateEncoders=False)
 
 # CONTROL LOOP ***************************************************
 while ((not device.hardware.IsTimeout()) and  device.cpt < experimentTime):

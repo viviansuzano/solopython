@@ -127,4 +127,5 @@ class CalibrationController():
             if (self.state[motor] != self.CALIBRATION_DONE):
                 test_calibrated = False
         self.all_motors_calibrated = test_calibrated
+
         return self.all_motors_calibrated

@@ -1,40 +1,17 @@
-from masterboard_utils import *
+import sys
+import numpy as np
+from time import clock
+from masterboard_utils import CalibrationController, mbs, GotoController
 
 
 class RobotHAL():
     ''' This class provide a robot specific access to the solo generic hardware'''
-
-    def InitRobotSpecificParameters(self):
-        '''
-        This function initialises all robot specific parameters
-        This function can be overloaded in a child class for different robots
-        '''
-        # Robot specific constants***********
-        self.nb_motors = 8
-        self.motorToUrdf = [0, 1, 3, 2, 5, 4, 6, 7]
-        self.urdfToMotor = [0, 1, 2, 3, 4, 5, 5, 7]
-
-        self.motorSign = np.array([-1, -1, +1, +1, -1, -1, +1, +1])
-        self.gearRatio = np.array([9.]*8)  # gearbox ratio
-        self.motorKt = np.array([0.02]*8)  # Nm/A
-
-        self.maximumCurrent = 3.0  # A
-        # To get this offsets, run the calibration with self.encoderOffsets at 0,
-        # then manualy move the robot in zero config, and paste the position here (note the negative sign!)
-        self.encoderOffsets = - \
-            np.array([1.660367, -2.610352,  2.866129,  1.009784,
-                      0.620769, -1.710268,  2.117314,  -4.056512])
-        #self.encoderOffsets *= 0.
-        # ***********************************
  
     def __init__(self, interfaceName="eth0", dt=0.001):
         self.isInitialized = False
         self.InitRobotSpecificParameters()
-        '''
         assert len(self.motorToUrdf) == self.nb_motors
-        assert len(self.urdfToMotor) == self.nb_motors
         assert len(self.motorSign) == self.nb_motors
-        '''
         assert self.nb_motors % 2 == 0
         # TODO assert mapping..
         assert self.maximumCurrent >= 0
@@ -73,6 +50,13 @@ class RobotHAL():
         self.hardware = mbs.MasterBoardInterface(interfaceName)
         self.calibCtrl = CalibrationController(self.hardware, self.nb_motors, self.dt, Kd=0.01, Kp=3.0 ,searchStrategy=searchStrategy)
         self.gotoCtrl = GotoController(self.hardware, self.nb_motors, self.dt, Kd=0.01, Kp=3.0)
+
+    def InitRobotSpecificParameters(self):
+        '''
+        This function initialises all robot specific parameters
+        This function **must** be overloaded in a child class for different robots
+        '''
+        raise RuntimeError("This class is an abstract class. Please overload this method.")
 
     def init(self,calibrateEncoders=False):
         # Initialization of the interface between the computer and the master board
@@ -205,6 +189,6 @@ class RobotHAL():
         self.hardware.PrintADC()
         self.hardware.PrintMotors()
         self.hardware.PrintMotorDrivers()
-        print(self.q_mes)
-        print(self.v_mes)
+        print("q_mes = ", self.q_mes)
+        print("v_mes = ", self.v_mes)
         sys.stdout.flush()
