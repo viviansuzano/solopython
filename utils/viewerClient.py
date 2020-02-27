@@ -9,8 +9,8 @@ class NonBlockingViewerFromRobot():
         # a shared c_double array
         self.dt = dt
         self.shared_q_viewer = Array(c_double, robot.nq, lock=False)
-        p = Process(target=self.display_process, args=(robot, self.shared_q_viewer))
-        p.start()
+        self.p = Process(target=self.display_process, args=(robot, self.shared_q_viewer))
+        self.p.start()
         
     def display_process(self,robot, shared_q_viewer):
         ''' This will run on a different process'''
@@ -24,6 +24,11 @@ class NonBlockingViewerFromRobot():
     def display(self,q):
         for i in range(len(self.shared_q_viewer)):
             self.shared_q_viewer[i] = q[i]
+    
+
+    def stop(self):
+        self.p.terminate()
+        self.p.join()
 
 
 class viewerClient():
@@ -38,6 +43,8 @@ class viewerClient():
     def display(self,q):
         self.nbv.display(q)
 
+    def stop(self):
+        self.nbv.stop()
 
 """v=viewerClient()
 from IPython import embed

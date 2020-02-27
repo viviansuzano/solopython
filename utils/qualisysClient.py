@@ -19,8 +19,12 @@ class QualisysClient():
         self.shared_timestamp = Value(c_double, lock=False)
         #self.shared_timestamp = -1
         args=(ip, body_id, self.shared_bodyPosition, self.shared_bodyVelocity,self.shared_bodyOrientationQuat,self.shared_bodyOrientationMat9, self.shared_timestamp)
-        p = Process(target=self.qualisys_process, args=args)
-        p.start()
+        self.p = Process(target=self.qualisys_process, args=args)
+        self.p.start()
+
+    def stop(self):
+        self.p.terminate()
+        self.p.join()
     
     def getPosition(self):
         return np.array([self.shared_bodyPosition[0],
