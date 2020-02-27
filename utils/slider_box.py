@@ -24,7 +24,7 @@ class SliderBox():
         self.slider_c = Value(c_double, lock=True)
         self.slider_d = Value(c_double, lock=True)
 
-        self.e_stop.value = False
+        self.e_stop.value = True
         self.slider_a.value = 0.0
         self.slider_b.value = 0.0
         self.slider_c.value = 0.0
@@ -46,17 +46,19 @@ class SliderBox():
             data_str = serial_connexion.readline()
             data_str = serial_connexion.readline()
             data_str_list = data_str.split()
-            e_stop.value = not bool(int(data_str_list[0]))
-            slider_a.value = float(data_str_list[1]) / 1024.0
-            slider_b.value = float(data_str_list[2]) / 1024.0
-            slider_c.value = float(data_str_list[3]) / 1024.0
-            slider_d.value = float(data_str_list[4]) / 1024.0
-            serial_connexion.flushInput()
+            if len(data_str_list) == 5:
+                e_stop.value = not bool(int(data_str_list[0]))
+                slider_a.value = float(data_str_list[1]) / 1024.0
+                slider_b.value = float(data_str_list[2]) / 1024.0
+                slider_c.value = float(data_str_list[3]) / 1024.0
+                slider_d.value = float(data_str_list[4]) / 1024.0
+                serial_connexion.flushInput()
         # Close the file
         serial_connexion.close()
 
     def stop(self):
         self.running.value = False
+        self.process.terminate()
         self.process.join()
 
     def get_e_stop(self):
