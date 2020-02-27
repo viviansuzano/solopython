@@ -58,7 +58,7 @@ class RobotHAL():
         '''
         raise RuntimeError("This class is an abstract class. Please overload this method.")
 
-    def init(self,calibrateEncoders=False):
+    def Init(self,calibrateEncoders=False):
         # Initialization of the interface between the computer and the master board
         self.hardware.Init()
         self.EnableAllMotors()
@@ -70,10 +70,10 @@ class RobotHAL():
             print("Running calibration...")
             self.RunHommingRoutine()
             print("End Of Calibration")
-        
-
-
-    def IMUeulerToBaseQuaternion(self, roll, pitch, yaw):
+    
+    @staticmethod
+    def EulerToQuaternion(roll_pitch_yaw):
+        roll, pitch, yaw = roll_pitch_yaw
         sr = np.sin(roll/2.)
         cr = np.cos(roll/2.)
         sp = np.sin(pitch/2.)
@@ -84,8 +84,8 @@ class RobotHAL():
         qy = cr * sp * cy + sr * cp * sy
         qz = cr * cp * sy - sr * sp * cy
         qw = cr * cp * cy + sr * sp * sy
-        # return [qx, qy, qz, qw] #return without rotation
-        return [-qy, -qx, qz, -qw]  # return with a rotation of 90dege around Z
+        return [qx, qy, qz, qw]
+        # return [-qy, -qx, qz, -qw]  # return with a rotation of 90dege around Z
 
     def SetDesiredJointTorque(self, tau):
         for i in range(self.nb_motors):
@@ -122,21 +122,17 @@ class RobotHAL():
                 self.v_mes[self.motorToUrdf[i]] = self.hardware.GetMotor(i).GetVelocity()/self.gearRatioSigned[i]
                 self.torquesFromCurrentMeasurment[self.motorToUrdf[i]] = self.hardware.GetMotor(i).GetCurrent()*self.jointKtSigned[i]
 
-        # /!\ Robot specific, TODO orientation of the IMU needs to be a robot specific parameter !
-        # Angular velocities of the base from IMU Gyroscope, note the rotation ! 
-        self.baseAngularVelocity[:] = (+self.hardware.imu_data_gyroscope(1),
-                                       +self.hardware.imu_data_gyroscope(0),
-                                       -self.hardware.imu_data_gyroscope(2))
+        # Angular velocities of the base from IMU Gyroscope
+        self.baseAngularVelocity[:] = self.rotateImuVectors(
+            [self.hardware.imu_data_gyroscope(0), self.hardware.imu_data_gyroscope(1), self.hardware.imu_data_gyroscope(2)])
 
-        # Orientation of the base from IMU Estimation Filter, note the rotation !    
-        self.baseOrientation[:] = self.IMUeulerToBaseQuaternion(self.hardware.imu_data_attitude(0),
-                                                                self.hardware.imu_data_attitude(1),
-                                                                self.hardware.imu_data_attitude(2))
+        # Orientation of the base from IMU Estimation Filter  
+        self.baseOrientation[:] = self.rotateImuOrientation(self.EulerToQuaternion(
+            [self.hardware.imu_data_attitude(0), self.hardware.imu_data_attitude(1), self.hardware.imu_data_attitude(2)]))
 
         # Linear Acceleration of the base from IMU Estimation Filter, note the rotation !                                                 
-        self.baseLinearAcceleration[:] = (+self.hardware.imu_data_linear_acceleration(1),
-                                          +self.hardware.imu_data_linear_acceleration(0),
-                                          -self.hardware.imu_data_linear_acceleration(2))
+        self.baseLinearAcceleration[:] = self.rotateImuVectors(
+            [self.hardware.imu_data_linear_acceleration(0), self.hardware.imu_data_linear_acceleration(1), self.hardware.imu_data_linear_acceleration(2)])
 
         return
 
