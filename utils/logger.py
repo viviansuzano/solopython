@@ -17,6 +17,7 @@ class Logger():
 
         self.mocapPosition = np.zeros([logSize,3])
         self.mocapVelocity = np.zeros([logSize,3])
+        self.mocapAngularVelocity = np.zeros([logSize,3])
         self.mocapOrientationMat9 = np.zeros([logSize,3,3])
         self.mocapOrientationQuat = np.zeros([logSize,4])
 
@@ -37,6 +38,7 @@ class Logger():
         if qualisys is not None:
             self.mocapPosition[self.i] = qualisys.getPosition()
             self.mocapVelocity[self.i] = qualisys.getVelocity()
+            self.mocapAngularVelocity[self.i] = qualisys.getAngularVelocity()
             self.mocapOrientationMat9[self.i] = qualisys.getOrientationMat9()
             self.mocapOrientationQuat[self.i] = qualisys.getOrientationQuat()
         self.i+=1
@@ -50,6 +52,7 @@ class Logger():
                             baseLinearAcceleration=self.baseLinearAcceleration,
                             mocapPosition=self.mocapPosition,
                             mocapVelocity=self.mocapVelocity,
+                            mocapAngularVelocity=self.mocapAngularVelocity,
                             mocapOrientationMat9=self.mocapOrientationMat9,
                             mocapOrientationQuat=self.mocapOrientationQuat)
         
