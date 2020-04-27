@@ -47,7 +47,7 @@ class RobotHAL():
         self.baseAngularVelocity = np.zeros(3)
         self.baseOrientation = np.array([0., 0., 0., 1.])
         self.baseLinearAcceleration = np.zeros(3)
-        self.hardware = mbs.MasterBoardInterface(interfaceName)
+        self.hardware = mbs.MasterBoardInterface(interfaceName, 0)
         self.calibCtrl = CalibrationController(self.hardware, self.nb_motors, self.dt, Kd=0.01, Kp=3.0 ,searchStrategy=searchStrategy)
         self.gotoCtrl = GotoController(self.hardware, self.nb_motors, self.dt, Kd=0.01, Kp=3.0)
 
