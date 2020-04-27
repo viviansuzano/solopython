@@ -59,10 +59,13 @@ class RobotHAL():
         raise RuntimeError("This class is an abstract class. Please overload this method.")
 
     def Init(self,calibrateEncoders=False):
-        # Initialization of the interface between the computer and the master board
+        # Initialization of the interface between the computer and the master board and the master board itself
         self.hardware.Init()
         self.EnableAllMotors()
         self.isInitialized = True
+
+        self.InitMasterBoard() # Initialization of the master board
+
         if calibrateEncoders:
             for i in range(self.nb_motors):
                 self.hardware.GetMotor(i).SetPositionOffset(self.encoderOffsets[i])
@@ -111,6 +114,17 @@ class RobotHAL():
             self.hardware.GetDriver(i).SetTimeout(5)
             self.hardware.GetDriver(i).Enable()
         return
+
+    def SendInit(self, WaitEndOfCycle=True):
+        '''This (possibly blocking) fuction will send an init packet to the robot'''
+        assert self.isInitialized, "The Robot HAL is not initialized. You have to call init() first"
+        self.hardware.SendInit()
+        if WaitEndOfCycle:
+            self.WaitEndOfCycle()
+
+    def InitMasterBoard(self):
+        while not self.hardware.IsAckMsgReceived():
+            self.SendInit(True)
 
     def UpdateMeasurment(self):
         '''This function will parse the last sensor packet, and convert position and velocity according to the robot actuation parameters'''
