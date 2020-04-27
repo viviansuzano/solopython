@@ -157,6 +157,13 @@ class RobotHAL():
         if WaitEndOfCycle:
             self.WaitEndOfCycle()
 
+    def AreAllDriversConnected(self):
+        '''Test if all motor drivers are connected'''
+        for i in range(0, self.nb_motors, 2):
+            if not (self.hardware.GetDriver(i).is_connected):
+                return False
+        return True
+
     def AreAllMotorsReady(self):
         '''Test if all motors are enabled and ready'''
         for i in range(self.nb_motors):
