@@ -127,7 +127,7 @@ class RobotHAL():
             self.WaitEndOfCycle()
 
     def InitMasterBoard(self):
-        while not self.hardware.IsAckMsgReceived():
+        while not self.hardware.IsTimeout() and not self.hardware.IsAckMsgReceived():
             self.SendInit(True)
 
     def UpdateMeasurment(self):
