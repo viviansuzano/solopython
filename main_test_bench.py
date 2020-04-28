@@ -9,11 +9,29 @@ def example_script(name_interface):
     device = TestBench(name_interface,dt=0.001)
     nb_motors = device.nb_motors
 
-    device.Init(calibrateEncoders=False)
+    kp = 0.125 # Proportional gain
+    kd = 0.0025 # Derivative gain
+
+    freq = 0.5 # Frequency of the sine wave
+    amplitude = math.pi # Amplitude of the sine wave
+
+    device.Init(calibrateEncoders=True)
+    device.t = 0 # reset time for the sinus to begin at 0
     #CONTROL LOOP ***************************************************
     while ((not device.hardware.IsTimeout()) and (clock() < 200)):
         device.UpdateMeasurment()
-        device.SetDesiredJointTorque([0]*nb_motors)
+
+        torques = [0]*nb_motors
+        for i in range(device.nb_motors):
+            q_ref = amplitude * math.sin(2.0 * math.pi * freq * device.t)
+            v_ref = 2.0 * math.pi * freq * amplitude * math.cos(2.0 * math.pi * freq * device.t)
+
+            q_err = q_ref - device.q_mes[i] # Position error
+            v_err = v_ref - device.v_mes[i] # Velocity error
+
+            torques[i] = kp * q_err + kd * v_err
+
+        device.SetDesiredJointTorque(torques)
         device.SendCommand(WaitEndOfCycle=True)
         if ((device.cpt % 100) == 0):
             device.Print()
