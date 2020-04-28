@@ -66,6 +66,10 @@ class RobotHAL():
 
         self.InitMasterBoard() # Initialization of the master board
 
+        if not self.AreAllDriversConnected():
+            self.hardware.Stop()
+            raise RuntimeError("Not all declared motor drivers are connected.") # TODO replace RuntimeError by custom exception
+
         if calibrateEncoders:
             for i in range(self.nb_motors):
                 self.hardware.GetMotor(i).SetPositionOffset(self.encoderOffsets[i])
@@ -130,7 +134,11 @@ class RobotHAL():
         '''This function will parse the last sensor packet, and convert position and velocity according to the robot actuation parameters'''
         self.hardware.ParseSensorData()
         for i in range(self.nb_motors):
-            # TODO check integrity differently
+            error_code = self.hardware.GetDriver(i/2).error_code
+            if  error_code != 0:
+                self.hardware.Stop()
+                raise RuntimeError("Driver {} returned error {:#x}.".format(i/2, error_code)) # TODO replace RuntimeError by custom exception
+            
             if self.hardware.GetMotor(i).IsEnabled():
                 self.q_mes[self.motorToUrdf[i]] = self.hardware.GetMotor(i).GetPosition()/self.gearRatioSigned[i]
                 self.v_mes[self.motorToUrdf[i]] = self.hardware.GetMotor(i).GetVelocity()/self.gearRatioSigned[i]
