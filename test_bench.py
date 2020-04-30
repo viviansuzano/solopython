@@ -18,8 +18,7 @@ class TestBench(RobotHAL):
         self.maximumCurrent = 3.0  # A
         # To get this offsets, run the calibration with self.encoderOffsets at 0,
         # then manualy move the robot in zero config, and paste the position here (note the negative sign!)
-        self.encoderOffsets = - \
-            np.array([1.02373588, 0.24259591]) # Zero arrows up
+        self.encoderOffsets = - np.array([1.023422122001648, 0.24071289598941803]) # Zero arrows up
         #self.encoderOffsets *= 0.
         self.rotateImuVectors = lambda x: [x[0], x[1], x[2]] # No IMU for the test benches
         self.rotateImuOrientation = lambda q: [q[0], q[1], q[2], q[3]] # No IMU for the test benches
