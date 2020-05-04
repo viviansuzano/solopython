@@ -3,6 +3,8 @@ import numpy as np
 import argparse
 import math
 from time import clock, sleep
+
+import builtins
 import keyboard
 
 # Change this with your robot
@@ -24,10 +26,10 @@ def return_callback(event):
 
 def example_script(name_interface):
     # making code compatible with python 2 and 3
-    try:
-        input = raw_input
-    except NameError:
-        pass
+    if hasattr(builtins, "raw_input"):
+        input = builtins.raw_input
+    else:
+        input = builtins.input
 
     global init_done, calibration_done
 
