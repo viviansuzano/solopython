@@ -105,7 +105,7 @@ class CalibrationController():
 
                 elif (self.state[motor] == self.SEARCHING_INDEX):
                 # POSITION CONTROL TO FIND INDEX
-                    if (self.robot_if.GetMotor(motor).has_index_been_detected):
+                    if (self.robot_if.GetMotor(motor).HasIndexBeenDetected()):
                         self.control[motor] = 0
                         self.state[motor] = self.CALIBRATION_DONE
                     else:

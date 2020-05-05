@@ -135,7 +135,7 @@ class RobotHAL():
         self.hardware.ParseSensorData()
         for i in range(self.nb_motors):
             if i % 2 == 0:
-                error_code = self.hardware.GetDriver(i//2).error_code
+                error_code = self.hardware.GetDriver(i//2).GetErrorCode()
                 if  error_code != 0:
                     self.hardware.Stop()
                     raise RuntimeError("Driver {} returned error {:#x}.".format(i//2, error_code)) # TODO replace RuntimeError by custom exception
@@ -169,7 +169,7 @@ class RobotHAL():
     def AreAllDriversConnected(self):
         '''Test if all motor drivers are connected'''
         for i in range(0, self.nb_motors, 2):
-            if not (self.hardware.GetDriver(i).is_connected):
+            if not (self.hardware.GetDriver(i).IsConnected()):
                 return False
         return True
 
