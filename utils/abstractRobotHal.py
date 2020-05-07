@@ -168,7 +168,7 @@ class RobotHAL():
 
     def AreAllDriversConnected(self):
         '''Test if all motor drivers are connected'''
-        for i in range(0, self.nb_motors, 2):
+        for i in range(self.nb_motorDrivers):
             if not (self.hardware.GetDriver(i).IsConnected()):
                 return False
         return True
