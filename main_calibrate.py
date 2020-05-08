@@ -101,7 +101,7 @@ def example_script(name_interface):
         print("Calibration done.")
         print("Please paste the following value into your RobotHAL file after \"self.encoderOffsets = \":")
         print("")
-        print("- np.array({})".format([(device.hardware.GetMotor(i).GetPosition() if (bin_motors & (1 << i)) >> i else device.encoderOffsets[i]) \
+        print("- np.array({})".format([(device.hardware.GetMotor(i).GetPosition() if (bin_motors & (1 << i)) >> i else - device.encoderOffsets[i]) \
                                         for i in range(nb_motors)]))
 
     elif device.hardware.IsTimeout():
