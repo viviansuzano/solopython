@@ -128,7 +128,7 @@ class RobotHAL():
 
     def InitMasterBoard(self):
         while not self.hardware.IsTimeout() and not self.hardware.IsAckMsgReceived():
-            self.SendInit(True)
+            self.SendInit(WaitEndOfCycle=True)
 
     def UpdateMeasurment(self):
         '''This function will parse the last sensor packet, and convert position and velocity according to the robot actuation parameters'''

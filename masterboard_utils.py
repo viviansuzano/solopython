@@ -37,6 +37,7 @@ class GotoController():
 
     def ManageControl(self):
         self.t+=self.dt
+        ended = True
         for motor in range(self.nb_motors):
             if self.robot_if.GetMotor(motor).IsEnabled():
                 #*** State machine ***
