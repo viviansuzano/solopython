@@ -43,6 +43,7 @@ def example_script(name_interface):
     kp = 0.125 # Proportional gain
     kd = 0.0025 # Derivative gain
 
+    # Change this with your robot
     device = TestBench(name_interface,dt=0.001)
     nb_motors = device.nb_motors
 
@@ -67,10 +68,10 @@ def example_script(name_interface):
 
     not_to_calibrate = []
     for i in range(nb_motors):
-        if ((bin_motors & (1 << i)) >> i): # if motor needs to be calibrated
+        if ((bin_motors & (1 << device.motorToUrdf[i])) >> device.motorToUrdf[i]): # if motor needs to be calibrated
             device.encoderOffsets[i] = 0; # set offset to zero
         else:
-            not_to_calibrate.append(i)
+            not_to_calibrate.append(device.motorToUrdf[i])
 
     device.Init(calibrateEncoders=True) # finding encoder index happens in here
     init_done = True
@@ -97,11 +98,14 @@ def example_script(name_interface):
     # ---
 
     if calibration_done:
+        device.SetDesiredJointTorque([0] * nb_motors)
+        device.SendCommand(WaitEndOfCycle=True)
+
         print("")
         print("Calibration done.")
         print("Please paste the following value into your RobotHAL file after \"self.encoderOffsets = \":")
         print("")
-        print("- np.array({})".format([(device.hardware.GetMotor(i).GetPosition() if (bin_motors & (1 << i)) >> i else - device.encoderOffsets[i]) \
+        print("- np.array({})".format([(device.hardware.GetMotor(i).GetPosition() if (bin_motors & (1 << device.motorToUrdf[i])) >> device.motorToUrdf[i] else - device.encoderOffsets[i]) \
                                         for i in range(nb_motors)]))
 
     elif device.hardware.IsTimeout():
