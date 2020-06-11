@@ -5,8 +5,12 @@ import math
 from time import clock, sleep
 from utils.slider_box import SliderBox
 from solo12 import Solo12
+from masterboard_utils import SetSchedulerParam
 
 def example_script(name_interface):
+    # Changing scheduler param to real time
+    SetSchedulerParam()
+
     slider_box = SliderBox()
     device = Solo12(name_interface,dt=0.001)
     nb_motors = device.nb_motors

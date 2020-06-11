@@ -3,6 +3,8 @@ import libmaster_board_sdk_pywrap as mbs
 import sys
 from time import clock, sleep
 import math
+import os
+
 '''This file collects a set of usefull functions to maniputate a master_board_sdk object'''
 class GotoController():
     def __init__(self,robot_if,nb_motors,dt,T_move=1.0, T_static=5.0,Kp = 2.0,Kd = 0.05,imax=3.0,FinalPosition=None):
@@ -130,3 +132,7 @@ class CalibrationController():
         self.all_motors_calibrated = test_calibrated
 
         return self.all_motors_calibrated
+
+def SetSchedulerParam():
+    '''Sets the scheduler parameters to realtime and maximum priority'''
+    os.sched_setscheduler(0, os.SCHED_FIFO, os.sched_param(99))

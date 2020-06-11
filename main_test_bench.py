@@ -4,8 +4,12 @@ import argparse
 import math
 from time import clock, sleep
 from test_bench import TestBench
+from masterboard_utils import SetSchedulerParam
 
 def example_script(name_interface):
+    # Changing scheduler param to real time
+    SetSchedulerParam()
+
     device = TestBench(name_interface,dt=0.001)
     nb_motors = device.nb_motors
 
@@ -18,7 +22,7 @@ def example_script(name_interface):
     device.Init(calibrateEncoders=True)
     device.t = 0 # reset time for the sinus to begin at 0
     #CONTROL LOOP ***************************************************
-    while ((not device.hardware.IsTimeout()) and (clock() < 200)):
+    while ((not device.hardware.IsTimeout()) and (clock() < 20)):
         device.UpdateMeasurment()
 
         torques = [0]*nb_motors
