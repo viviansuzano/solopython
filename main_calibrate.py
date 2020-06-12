@@ -3,7 +3,6 @@ import numpy as np
 import argparse
 import math
 from time import clock, sleep
-from masterboard_utils import SetSchedulerParam
 
 import builtins
 import keyboard
@@ -26,9 +25,6 @@ def return_callback(event):
 
 
 def example_script(name_interface):
-    # Changing scheduler param to real time
-    SetSchedulerParam()
-
     # making code compatible with python 2 and 3
     if hasattr(builtins, "raw_input"):
         input = builtins.raw_input

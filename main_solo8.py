@@ -5,12 +5,8 @@ import math
 from time import clock, sleep
 from utils.viewerClient import viewerClient
 from solo8 import Solo8
-from masterboard_utils import SetSchedulerParam
 
 def example_script(name_interface):
-    # Changing scheduler param to real time
-    SetSchedulerParam()
-
     viewer = viewerClient()
     device = Solo8(name_interface,dt=0.001)
     nb_motors = device.nb_motors
