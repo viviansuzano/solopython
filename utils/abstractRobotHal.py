@@ -136,8 +136,7 @@ class RobotHAL():
         for i in range(self.nb_motors):
             if i % 2 == 0:
                 error_code = self.hardware.GetDriver(i//2).GetErrorCode()
-                # if transaction with driver failed (0xf) or if another error occurs while de driver is enabled
-                if  error_code == 0xf or (self.hardware.GetDriver(i//2).IsEnabled() and error_code != 0):
+                if  error_code != 0:
                     self.hardware.Stop()
                     raise RuntimeError("Driver {} returned error {:#x}.".format(i//2, error_code)) # TODO replace RuntimeError by custom exception
             
