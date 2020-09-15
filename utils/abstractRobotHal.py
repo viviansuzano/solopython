@@ -58,7 +58,7 @@ class RobotHAL():
         '''
         raise RuntimeError("This class is an abstract class. Please overload this method.")
 
-    def Init(self,calibrateEncoders=False):
+    def Init(self,calibrateEncoders=False, q_init=None):
         # Initialization of the interface between the computer and the master board and the master board itself
         self.hardware.Init()
         self.EnableAllMotors()
@@ -69,6 +69,17 @@ class RobotHAL():
         if not self.AreAllDriversConnected():
             self.hardware.Stop()
             raise RuntimeError("Not all declared motor drivers are connected.") # TODO replace RuntimeError by custom exception
+
+        if q_init is not None:
+            # Define initial configuration after calibration
+            assert (max(abs(q_init))<2*np.pi)
+            # Convert to motor angle:
+            motor_angle_init = np.zeros(self.nb_motors)
+            for i in range(self.nb_motors):
+                motor_angle_init[i] = q_init[self.motorToUrdf[i]] * self.gearRatioSigned[i]
+            # Change the target of the controller
+            self.gotoCtrl.FinalPosition = motor_angle_init
+            self.T_move = 3.
 
         if calibrateEncoders:
             for i in range(self.nb_motors):
