@@ -3,10 +3,11 @@ import numpy as np
 class Logger():
     def __init__(self, device, qualisys=None, logSize=60e3, ringBuffer=False):    
         self.ringBuffer = ringBuffer
+        logSize = np.int(logSize)
         self.logSize=logSize
         self.i=0
         nb_motors = device.nb_motors
-        
+
         #allocate the data:
         self.q_mes = np.zeros([logSize,nb_motors])
         self.v_mes = np.zeros([logSize,nb_motors])

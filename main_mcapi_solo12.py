@@ -22,7 +22,7 @@ tau_max = 3. * np.ones(8)
 key_pressed = False
 
 # Variables for motion range test of Solo12
-t_switch = np.array([0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0, 24.0, 27.0, 33.0, 36.0, 39.0, 42.0])
+t_switch = 0.3 * np.array([0.0, 3.0, 6.0, 9.0, 12.0, 15.0, 18.0, 21.0, 24.0, 27.0, 33.0, 36.0, 39.0, 42.0])
 q1 = 0.66 * np.pi
 q_switch = np.array([[0.0, 0.66 * np.pi, 0.0, 0.66 * np.pi, 0.0, 0.5 * np.pi, 0.5 * np.pi, 0.5 * np.pi, 0.0, -0.1 * np.pi, 0.0, 0.22 * np.pi, 0.0, 0.0],
                     [0.8, 0.8,  -0.8, -0.8, 0.8, 0.8, 0.0, -0.8, -0.8, -1.4, np.pi*0.5, np.pi*0.5, np.pi*0.5, 0.0],
@@ -175,12 +175,14 @@ def mcapi_playback(name_interface, filename):
 	tau_des_t = np.zeros([8, num_steps])
 	tau_send_t = np.zeros([8, num_steps])
 	tau_mesured_t = np.zeros([8, num_steps])
-	q_init = config_12_to_8(q_t(t_min)[7:])
+	q_init = np.array([0.0, 0.8, -1.6, 0, 0.8, -1.6, 0, -0.8, 1.6, 0, -0.8, 1.6])
+	# q_init[11] = 0.2
 	device.Init(calibrateEncoders=True, q_init=q_init)
 	t = t_min
 	put_on_the_floor(device, q_init)
 	#CONTROL LOOP ***************************************************
 	t_id = 0
+	t_max = 42.0
 	while ((not device.hardware.IsTimeout()) and (t < t_max)):
 		# q_desired = config_12_to_8(q_t(t)[7:])  # remove freeflyer
 		# dq_desired = config_12_to_8(dq_t(t)[6:])  # remove freeflyer
@@ -189,29 +191,29 @@ def mcapi_playback(name_interface, filename):
 		# tau = compute_pd(q_desired, dq_desired, tau_desired, device)
 
 		# Parameters of the PD controller
-		KP = 4.
+		KP = 2.
 		KD = 0.05
 		KT = 1.
-		tau_max = 3. * np.ones(12)
+		tau_max = 5. * np.ones(12)
 
 		# Desired position and velocity for this loop and resulting torques
 		q_desired, v_desired = test_solo12(t)
-		pos_error = q_desired.ravel() - actuators_pos[:]
-		vel_error = v_desired.ravel() - actuators_vel[:]
+		pos_error = q_desired.ravel() - device.q_mes.ravel()
+		vel_error = v_desired.ravel() - device.v_mes.ravel()
 		tau = KP * pos_error + KD * vel_error
-		tau = 0.0 * np.maximum(np.minimum(tau, tau_max), -tau_max)
+		tau = np.maximum(np.minimum(tau, tau_max), -tau_max)
 
 		# Send desired torques to the robot
 		device.SetDesiredJointTorque(tau)
 
 		# store desired and mesured data for plotting
-		q_des_t[:, t_id] = q_desired
+		"""q_des_t[:, t_id] = q_desired
 		v_des_t[:, t_id] = dq_desired
 		q_mes_t[:, t_id] = device.q_mes
 		v_mes_t[:, t_id] = device.v_mes
 		tau_des_t[:, t_id] = tau_desired
 		tau_send_t[:, t_id] = tau
-		tau_mesured_t[: , t_id] = device.torquesFromCurrentMeasurment
+		tau_mesured_t[: , t_id] = device.torquesFromCurrentMeasurment"""
 
 		# call logger
 		# logger.sample(device, qualisys=qc)
