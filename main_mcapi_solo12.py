@@ -1,8 +1,6 @@
 # coding: utf8
 import numpy as np
 import argparse
-import math
-from time import clock, sleep
 from solo12 import Solo12
 from pynput import keyboard
 
@@ -25,14 +23,14 @@ q_switch = np.array([[0.0, 0.66 * np.pi, 0.0, 0.66 * np.pi, 0.0, 0.5 * np.pi, 0.
 
 
 def demo_solo12(t):
-	"""Compute the desired position and velocity of actuators at time t depending on the targets
-	defined in t_switch and q_switch
+    """Compute the desired position and velocity of actuators at time t depending on the targets
+    defined in t_switch and q_switch
 
-	Args:
-		t (float): time elapsed since the start of the demo
-	"""
+    Args:
+        t (float): time elapsed since the start of the demo
+    """
 
-	i = 1
+    i = 1
     while (i < t_switch.shape[0]) and (t_switch[i] <= t):
         i += 1
 
@@ -44,13 +42,13 @@ def demo_solo12(t):
 
 
 def apply_q_v_change(t, i):
-	"""Interpolate position and velocity trajectories with polynomials to smoothly go from
-	one target to another
+    """Interpolate position and velocity trajectories with polynomials to smoothly go from
+    one target to another
 
-	Args:
-		t (float): time elapsed since the start of the demo
-		i (int): numero of the target that the robot is trying to reach
-	"""
+    Args:
+        t (float): time elapsed since the start of the demo
+        i (int): numero of the target that the robot is trying to reach
+    """
 
     # Interpolation of q and v for the front left leg
     ev = t - t_switch[i-1]
@@ -60,7 +58,7 @@ def apply_q_v_change(t, i):
     q = q_switch[:, (i-1):i] + A2*ev**2 + A3*ev**3
     v = 2 * A2 * ev + 3 * A3 * ev**2
 
-	# Tiling the result of the front left leg for the three other legs
+    # Tiling the result of the front left leg for the three other legs
     q = np.tile(q, (4, 1)) * np.array([[1, 1, 1, -1, 1, 1, 1, -1, -1, -1, -1, -1]]).transpose()
     v = np.tile(v, (4, 1)) * np.array([[1, 1, 1, -1, 1, 1, 1, -1, -1, -1, -1, -1]]).transpose()
 
@@ -68,125 +66,123 @@ def apply_q_v_change(t, i):
 
 
 def on_press(key):
-	"""Wait for a specific key press on the keyboard
+    """Wait for a specific key press on the keyboard
 
-	Args:
-		key (keyboard.Key): the key we want to wait for
-	"""
-	global key_pressed
-	try:
-		if key == keyboard.Key.enter:
-			key_pressed = True
-			# Stop listener
-			return False
-	except AttributeError:
-		print('Unknown key {0} pressed'.format(key))
+    Args:
+        key (keyboard.Key): the key we want to wait for
+    """
+    global key_pressed
+    try:
+        if key == keyboard.Key.enter:
+            key_pressed = True
+            # Stop listener
+            return False
+    except AttributeError:
+        print('Unknown key {0} pressed'.format(key))
 
 
 def put_on_the_floor(device, q_init):
-	"""Make the robot go to the default initial position and wait for the user
-	to press the Enter key to start the main control loop
+    """Make the robot go to the default initial position and wait for the user
+    to press the Enter key to start the main control loop
 
-	Args:
-		device (robot wrapper): a wrapper to communicate with the robot
-		q_init (array): the default position of the robot 
-	"""
-	global key_pressed
-	key_pressed = False
-	Kp_pos = 3.
-	Kd_pos = 0.01
-	imax = 3.0
-	pos = np.zeros(device.nb_motors)
-	for motor in range(device.nb_motors):
-		pos[motor] = q_init[device.motorToUrdf[motor]] * device.gearRatioSigned[motor]
-	listener = keyboard.Listener(on_press=on_press)
-	listener.start()
-	print("Put the robot on the floor and press Enter")
-	while not key_pressed:
-		device.UpdateMeasurment()
-		for motor in range(device.nb_motors):
-			ref = Kp_pos*(pos[motor] - device.hardware.GetMotor(motor).GetPosition() - Kd_pos*device.hardware.GetMotor(motor).GetVelocity())
-			ref = min(imax, max(-imax, ref))
-			device.hardware.GetMotor(motor).SetCurrentReference(ref)
-		device.SendCommand(WaitEndOfCycle=True)
+    Args:
+        device (robot wrapper): a wrapper to communicate with the robot
+        q_init (array): the default position of the robot
+    """
+    global key_pressed
+    key_pressed = False
+    Kp_pos = 3.
+    Kd_pos = 0.01
+    imax = 3.0
+    pos = np.zeros(device.nb_motors)
+    for motor in range(device.nb_motors):
+        pos[motor] = q_init[device.motorToUrdf[motor]] * device.gearRatioSigned[motor]
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
+    print("Put the robot on the floor and press Enter")
+    while not key_pressed:
+        device.UpdateMeasurment()
+        for motor in range(device.nb_motors):
+            ref = Kp_pos*(pos[motor] - device.hardware.GetMotor(motor).GetPosition() - Kd_pos*device.hardware.GetMotor(motor).GetVelocity())
+            ref = min(imax, max(-imax, ref))
+            device.hardware.GetMotor(motor).SetCurrentReference(ref)
+        device.SendCommand(WaitEndOfCycle=True)
 
-	print("Start the motion.")
+    print("Start the motion.")
 
 
 def mcapi_playback(name_interface):
-	"""Main function that calibrates the robot, get it into a default waiting position then launch
-	the main control loop once the user has pressed the Enter key
+    """Main function that calibrates the robot, get it into a default waiting position then launch
+    the main control loop once the user has pressed the Enter key
 
-	Args:
-		name_interface (string): name of the interface that is used to communicate with the robot
-	"""
-	device = Solo12(name_interface,dt=DT)
-	qc = QualisysClient(ip="140.93.16.160", body_id=0)  # QualisysClient
-	logger = Logger(device, qualisys=qc)  # Logger object
-	nb_motors = device.nb_motors
+    Args:
+        name_interface (string): name of the interface that is used to communicate with the robot
+    """
+    device = Solo12(name_interface, dt=DT)
+    qc = QualisysClient(ip="140.93.16.160", body_id=0)  # QualisysClient
+    logger = Logger(device, qualisys=qc)  # Logger object
+    nb_motors = device.nb_motors
 
-	# Default position after calibration
-	q_init = np.array([0.0, 0.8, -1.6, 0, 0.8, -1.6, 0, -0.8, 1.6, 0, -0.8, 1.6])
-	
-	# Calibrate encoders
-	device.Init(calibrateEncoders=True, q_init=q_init)
-	
-	# Wait for Enter input before starting the control loop
-	put_on_the_floor(device, q_init)
+    # Default position after calibration
+    q_init = np.array([0.0, 0.8, -1.6, 0, 0.8, -1.6, 0, -0.8, 1.6, 0, -0.8, 1.6])
 
-	#CONTROL LOOP ***************************************************
-	t_id = 0
-	t = 0.0
-	t_max = t_switch[-1]
+    # Calibrate encoders
+    device.Init(calibrateEncoders=True, q_init=q_init)
 
-	# Parameters of the PD controller
-	KP = 2.
-	KD = 0.05
-	KT = 1.
-	tau_max = 5. * np.ones(12)
+    # Wait for Enter input before starting the control loop
+    put_on_the_floor(device, q_init)
 
-	while ((not device.hardware.IsTimeout()) and (t < t_max)):
+    # CONTROL LOOP ***************************************************
+    t = 0.0
+    t_max = t_switch[-1]
 
-		device.UpdateMeasurment()  # Retrieve data from IMU and Motion capture 
+    # Parameters of the PD controller
+    KP = 2.
+    KD = 0.05
+    tau_max = 5. * np.ones(12)
 
-		# Desired position and velocity for this loop and resulting torques
-		q_desired, v_desired = demo_solo12(t)
-		pos_error = q_desired.ravel() - device.q_mes.ravel()
-		vel_error = v_desired.ravel() - device.v_mes.ravel()
-		tau = KP * pos_error + KD * vel_error
-		tau = np.maximum(np.minimum(tau, tau_max), -tau_max)
+    while ((not device.hardware.IsTimeout()) and (t < t_max)):
 
-		# Set desired torques for the actuators
-		device.SetDesiredJointTorque(tau)
+        device.UpdateMeasurment()  # Retrieve data from IMU and Motion capture
 
-		# Call logger
-		# logger.sample(device, qualisys=qc)
+        # Desired position and velocity for this loop and resulting torques
+        q_desired, v_desired = demo_solo12(t)
+        pos_error = q_desired.ravel() - device.q_mes.ravel()
+        vel_error = v_desired.ravel() - device.v_mes.ravel()
+        tau = KP * pos_error + KD * vel_error
+        tau = np.maximum(np.minimum(tau, tau_max), -tau_max)
 
-		# Send command to the robot
-		device.SendCommand(WaitEndOfCycle=True)
-		if ((device.cpt % 100) == 0):
-		    device.Print()
+        # Set desired torques for the actuators
+        device.SetDesiredJointTorque(tau)
 
-		t += DT
+        # Call logger
+        # logger.sample(device, qualisys=qc)
 
-	#****************************************************************
-    
-	# Whatever happened we send 0 torques to the motors.
-	device.SetDesiredJointTorque([0]*nb_motors)
-	device.SendCommand(WaitEndOfCycle=True)
+        # Send command to the robot
+        device.SendCommand(WaitEndOfCycle=True)
+        if ((device.cpt % 100) == 0):
+            device.Print()
 
-	if device.hardware.IsTimeout():
-		print("Masterboard timeout detected.")
-		print("Either the masterboard has been shut down or there has been a connection issue with the cable/wifi.")
-	device.hardware.Stop()  # Shut down the interface between the computer and the master board
-	
-	# Save the logs of the Logger object
-	# logger.saveAll()
+        t += DT
+
+    # ****************************************************************
+
+    # Whatever happened we send 0 torques to the motors.
+    device.SetDesiredJointTorque([0]*nb_motors)
+    device.SendCommand(WaitEndOfCycle=True)
+
+    if device.hardware.IsTimeout():
+        print("Masterboard timeout detected.")
+        print("Either the masterboard has been shut down or there has been a connection issue with the cable/wifi.")
+    device.hardware.Stop()  # Shut down the interface between the computer and the master board
+
+    # Save the logs of the Logger object
+    # logger.saveAll()
 
 
 def main():
-	"""Main function
-	"""
+    """Main function
+    """
 
     parser = argparse.ArgumentParser(description='Playback trajectory to show the extent of solo12 workspace.')
     parser.add_argument('-i',
