@@ -3,6 +3,13 @@ import numpy as np
 import argparse
 from solo12 import Solo12
 from pynput import keyboard
+import pinocchio as pin
+import tsid as tsid
+
+import os
+import sys
+sys.path.insert(0, './mpctsid')
+from mpctsid.Estimator import Estimator
 
 from utils.qualisysClient import QualisysClient
 from utils.viewerClient import viewerClient, NonBlockingViewerFromRobot
@@ -65,15 +72,41 @@ def mcapi_playback(name_interface):
         name_interface (string): name of the interface that is used to communicate with the robot
     """
     device = Solo12(name_interface, dt=DT)
+    qc = QualisysClient(ip="140.93.16.160", body_id=0)
+	logger = Logger(device, qualisys=qc)
     nb_motors = device.nb_motors
 
     q_viewer = np.array((7 + nb_motors) * [0.,])
 
+    # Gepetto-gui
     v = viewerClient()
     v.display(q_viewer)
 
+    # Maximum duration of the demonstration
+    t_max = 300.0
+
     # Default position after calibration
     q_init = np.zeros(12)
+
+    # Create Estimator object
+    estimator = Estimator(DT, np.int(t_max/DT))
+
+    # Set the paths where the urdf and srdf file of the robot are registered
+    modelPath = "/opt/openrobots/share/example-robot-data/robots"
+    urdf = modelPath + "/solo_description/robots/solo12.urdf"
+    vector = pin.StdVec_StdString()
+    vector.extend(item for item in modelPath)
+
+    # Create the robot wrapper from the urdf model (which has no free flyer) and add a free flyer
+    robot = tsid.RobotWrapper(urdf, vector, pin.JointModelFreeFlyer(), False)
+    model = robot.model()
+
+    # Creation of the Invverse Dynamics HQP problem using the robot
+    # accelerations (base + joints) and the contact forces
+    invdyn = tsid.InverseDynamicsFormulationAccForce("tsid", robot, False)
+
+    # Compute the problem data with a solver based on EiQuadProg
+    invdyn.computeProblemData(0.0, q_init, np.zeros(12))
 
     # Calibrate encoders
     device.Init(calibrateEncoders=True, q_init=q_init)
@@ -83,11 +116,14 @@ def mcapi_playback(name_interface):
 
     # CONTROL LOOP ***************************************************
     t = 0.0
-    t_max = 300.0
+    k = 0
 
     while ((not device.hardware.IsTimeout()) and (t < t_max)):
 
         device.UpdateMeasurment()  # Retrieve data from IMU and Motion capture
+
+        # Run estimator with hind left leg touching the ground
+        estimator.run_filter(k, np.array([0, 0, 1, 0]), device, invdyn.data(), model)
 
         # Zero desired torques
         tau = np.zeros(12)
@@ -95,18 +131,22 @@ def mcapi_playback(name_interface):
         # Set desired torques for the actuators
         device.SetDesiredJointTorque(tau)
 
+        # Call logger
+        logger.sample(device, qualisys=qc, estimator=estimator)
+
         # Send command to the robot
         device.SendCommand(WaitEndOfCycle=True)
         if ((device.cpt % 100) == 0):
             device.Print()
 
         # Gepetto GUI
-        q_viewer[3:7] = device.baseOrientation  # IMU Attitude
-        q_viewer[7:] = device.q_mes  # Encoders
+        q_viewer[3:7] = estimator.q_filt[3:7, 0]  # Orientation
+        q_viewer[7:] = estimator.q_filt[7:, 0]  # Encoders
         q_viewer[2] = 0.5
         v.display(q_viewer)
 
         t += DT
+        k += 1
 
     # ****************************************************************
 
@@ -118,6 +158,9 @@ def mcapi_playback(name_interface):
         print("Masterboard timeout detected.")
         print("Either the masterboard has been shut down or there has been a connection issue with the cable/wifi.")
     device.hardware.Stop()  # Shut down the interface between the computer and the master board
+
+    # Save the logs of the Logger object
+    logger.saveAll()
 
 
 def main():
