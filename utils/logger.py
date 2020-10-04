@@ -1,5 +1,6 @@
 '''This class will log 1d array in Nd matrix from device and qualisys object'''
 import numpy as np
+from datetime import datetime as datetime
 
 
 class Logger():
@@ -51,8 +52,11 @@ class Logger():
             self.estimatorVelocity[self.i] = estimator.v_filt[0:3, 0]
         self.i += 1
 
-    def saveAll(self, fileName="data.npz"):
-        np.savez(fileName,  q_mes=self.q_mes,
+    def saveAll(self, fileName="data"):
+        date_str = datetime.now().strftime('_%Y_%m_%d_%H_%M')
+
+        np.savez(fileName + date_str + ".npz",
+                 q_mes=self.q_mes,
                  v_mes=self.v_mes,
                  torquesFromCurrentMeasurment=self.torquesFromCurrentMeasurment,
                  baseOrientation=self.baseOrientation,
