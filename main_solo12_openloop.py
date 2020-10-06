@@ -13,7 +13,7 @@ from mpctsid.Estimator import Estimator
 from mpctsid.Controller import Controller
 from utils.viewerClient import viewerClient, NonBlockingViewerFromRobot
 
-SIMULATION = False
+SIMULATION = True
 LOGGING = False
 
 if SIMULATION:
@@ -66,7 +66,8 @@ def put_on_the_floor(device, q_init):
     while not key_pressed:
         device.UpdateMeasurment()
         for motor in range(device.nb_motors):
-            ref = Kp_pos*(pos[motor] - device.hardware.GetMotor(motor).GetPosition() - Kd_pos*device.hardware.GetMotor(motor).GetVelocity())
+            ref = Kp_pos*(pos[motor] - device.hardware.GetMotor(motor).GetPosition() -
+                          Kd_pos*device.hardware.GetMotor(motor).GetVelocity())
             ref = min(imax, max(-imax, ref))
             device.hardware.GetMotor(motor).SetCurrentReference(ref)
         device.SendCommand(WaitEndOfCycle=True)
@@ -121,7 +122,7 @@ def mcapi_playback(name_interface):
 
     # Run a scenario and retrieve data thanks to the logger
     controller = Controller(q_init, envID, velID, dt_tsid, dt_mpc, k_mpc, t, n_periods, T_gait, N_SIMULATION, type_MPC,
-                             pyb_feedback, on_solo8, use_flat_plane, predefined_vel, enable_pyb_GUI)
+                            pyb_feedback, on_solo8, use_flat_plane, predefined_vel, enable_pyb_GUI)
 
     ####
 
@@ -162,7 +163,11 @@ def mcapi_playback(name_interface):
         tau = tau.ravel()
 
         # Set desired torques for the actuators
-        device.SetDesiredJointTorque(tau)
+        device.SetKp(controller.result.P)
+        device.SetKd(controller.result.D)
+        device.SetQdes(controller.result.q_des)
+        device.SetVdes(controller.result.v_des)
+        device.SetTauFF(controller.result.tau_ff)
 
         # Call logger
         if LOGGING:
