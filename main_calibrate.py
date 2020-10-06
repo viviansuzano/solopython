@@ -8,7 +8,8 @@ import builtins
 import keyboard
 
 # Change this with your robot
-from test_bench import TestBench
+#from test_bench import TestBench
+from solo12 import Solo12
 
 init_done = False
 calibration_done = False
@@ -44,7 +45,7 @@ def example_script(name_interface):
     kd = 0.0025 # Derivative gain
 
     # Change this with your robot
-    device = TestBench(name_interface,dt=0.001)
+    device = Solo12(name_interface,dt=0.001)
     nb_motors = device.nb_motors
 
     print("")
