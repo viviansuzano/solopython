@@ -1,18 +1,27 @@
 # coding: utf8
 
-import numpy as np
-import argparse
-# from solo12 import Solo12
-# from pynput import keyboard
-
-from utils.logger import Logger
-# from utils.qualisysClient import QualisysClient
-
 import os
 import sys
 sys.path.insert(0, './mpctsid')
+
+from utils.logger import Logger
+import tsid as tsid
+import pinocchio as pin
+import argparse
+import numpy as np
+from mpctsid.Estimator import Estimator
 from mpctsid.Controller import Controller
-from mpctsid.utils_mpc  import PyBulletSimulator
+from utils.viewerClient import viewerClient, NonBlockingViewerFromRobot
+
+SIMULATION = False
+LOGGING = False
+
+if SIMULATION:
+    from mpctsid.utils_mpc import PyBulletSimulator
+else:
+    from pynput import keyboard
+    from solo12 import Solo12
+    from utils.qualisysClient import QualisysClient
 
 DT = 0.002
 
@@ -86,7 +95,7 @@ def mcapi_playback(name_interface):
     t = 0.0  # Time
     n_periods = 1  # Number of periods in the prediction horizon
     T_gait = 0.64  # Duration of one gait period
-    N_SIMULATION = 20000  # number of simulated TSID time steps
+    N_SIMULATION = 50000  # number of simulated TSID time steps
 
     # Which MPC solver you want to use
     # True to have PA's MPC, to False to have Thomas's MPC
@@ -116,24 +125,29 @@ def mcapi_playback(name_interface):
 
     ####
 
-    # Create device object
-    # device = Solo12(name_interface, dt=DT)
+    if SIMULATION:
+        device = PyBulletSimulator()
+        qc = None
+    else:
+        device = Solo12(name_interface, dt=DT)
+        qc = QualisysClient(ip="140.93.16.160", body_id=0)
 
-    device = PyBulletSimulator()
+    if LOGGING:
+        logger = Logger(device, qualisys=qc, logSize=N_SIMULATION)
 
-    # qc = QualisysClient(ip="140.93.16.160", body_id=0)  # QualisysClient
-    # logger = Logger(device, qualisys=qc)  # Logger object
+    # Number of motors
     nb_motors = device.nb_motors
+    q_viewer = np.array((7 + nb_motors) * [0., ])
 
-    # Calibrate encoders
-    #device.Init(calibrateEncoders=True, q_init=q_init)
-    device.Init(calibrateEncoders=True, q_init=q_init, envID=envID,
-            use_flat_plane=use_flat_plane, enable_pyb_GUI=enable_pyb_GUI, dt=dt_tsid)
+    # Initiate communication with the device and calibrate encoders
+    if SIMULATION:
+        device.Init(calibrateEncoders=True, q_init=q_init, envID=envID,
+                    use_flat_plane=use_flat_plane, enable_pyb_GUI=enable_pyb_GUI, dt=dt_tsid)
+    else:
+        device.Init(calibrateEncoders=True, q_init=q_init)
 
-    
-
-    # Wait for Enter input before starting the control loop
-    # put_on_the_floor(device, q_init)
+        # Wait for Enter input before starting the control loop
+        put_on_the_floor(device, q_init)
 
     # CONTROL LOOP ***************************************************
     t = 0.0
@@ -151,7 +165,8 @@ def mcapi_playback(name_interface):
         device.SetDesiredJointTorque(tau)
 
         # Call logger
-        # logger.sample(device, qualisys=qc)
+        if LOGGING:
+            logger.sample(device, qualisys=qc)
 
         # Send command to the robot
         device.SendCommand(WaitEndOfCycle=True)
@@ -177,7 +192,16 @@ def mcapi_playback(name_interface):
     device.hardware.Stop()  # Shut down the interface between the computer and the master board
 
     # Save the logs of the Logger object
-    # logger.saveAll()
+    if LOGGING:
+        logger.saveAll()
+        print("Log saved")
+
+    if SIMULATION and enable_pyb_GUI:
+        # Disconnect the PyBullet server (also close the GUI)
+        device.Stop()
+
+    print("End of script")
+    quit()
 
 
 def main():
