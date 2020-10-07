@@ -107,7 +107,7 @@ class RobotHAL():
 
     def SetDesiredJointTorque(self, tau):
         for i in range(self.nb_motors):
-            cur = tau[self.motorToUrdf[i]] / self.jointKtSigned[i]
+            cur = tau[self.motorToUrdf[i]] / self.jointKtSigned[i] #todo missing gear
             # cur = np.clip(cur,-self.maximumCurrent,self.maximumCurrent) #takes too long !
             if (cur > self.maximumCurrent):
                 cur = self.maximumCurrent
@@ -119,10 +119,46 @@ class RobotHAL():
                 self.hardware.GetMotor(i).SetCurrentReference(0)
         return
 
+    def SetDesiredJointPDgains(self, kp, kd):
+        for i in range(self.nb_motors):
+            motor_kp = kp[self.motorToUrdf[i]] / (self.motorKt[i]*self.gearRatio[i]*self.gearRatio[i]) 
+            motor_kd = kd[self.motorToUrdf[i]] / (self.motorKt[i]*self.gearRatio[i]*self.gearRatio[i])
+            if self.hardware.GetMotor(i).IsEnabled():
+                #self.hardware.GetMotor(i).SetKp(motor_kp)
+                #self.hardware.GetMotor(i).SetKd(motor_kd)
+                self.hardware.GetMotor(i).kp=motor_kp
+                self.hardware.GetMotor(i).kd=motor_kd
+            else:
+                self.hardware.GetMotor(i).SetCurrentReference(0.)
+                #self.hardware.GetMotor(i).SetKp(0.)
+                #self.hardware.GetMotor(i).SetKd(0.)
+                self.hardware.GetMotor(i).kp=0.
+                self.hardware.GetMotor(i).kd=0.
+        return
+
+    def SetDesiredJointPosition(self,pos):
+        for i in range(self.nb_motors):
+            motor_pos = pos[self.motorToUrdf[i]] * self.gearRatioSigned[i] 
+            #self.hardware.GetMotor(i).SetPositionReference(motor_pos)
+            self.hardware.GetMotor(i).position_ref = motor_pos
+        return
+
+    def SetDesiredJointVelocity(self,vel):
+        for i in range(self.nb_motors):
+            motor_vel = vel[self.motorToUrdf[i]] * self.gearRatioSigned[i] 
+            #self.hardware.GetMotor(i).SetVelocityReference(motor_vel)
+            self.hardware.GetMotor(i).velocity_ref = motor_vel
+        return   
+
     def EnableAllMotors(self):
         for i in range(self.nb_motorDrivers):
+            #todo reset local PD+ param?
             self.hardware.GetDriver(i).motor1.SetCurrentReference(0)
             self.hardware.GetDriver(i).motor2.SetCurrentReference(0)
+            self.hardware.GetDriver(i).motor1.kp=0.
+            self.hardware.GetDriver(i).motor2.kp=0.
+            self.hardware.GetDriver(i).motor1.kd=0.
+            self.hardware.GetDriver(i).motor2.kd=0.
             self.hardware.GetDriver(i).motor1.Enable()
             self.hardware.GetDriver(i).motor2.Enable()
             self.hardware.GetDriver(i).EnablePositionRolloverError()
