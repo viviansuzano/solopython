@@ -85,7 +85,7 @@ class QualisysClient():
 
             # Get the new position and Rotation matrix from the motion capture.
             position = np.array([position.x, position.y, position.z]) * 1e-3
-            rotation = np.array(orientation.matrix).reshape(3, 3)
+            rotation = np.array(orientation.matrix).reshape(3, 3).transpose()
             se3 = pinocchio.SE3(rotation, position)
             xyzquat = se3ToXYZQUAT(se3)
 
@@ -97,8 +97,16 @@ class QualisysClient():
             shared_bodyOrientationQuat[1] = xyzquat[4]
             shared_bodyOrientationQuat[2] = xyzquat[5]
             shared_bodyOrientationQuat[3] = xyzquat[6]
-            for i in range(9):
-                shared_bodyOrientationMat9[i] = orientation.matrix[i]
+
+            shared_bodyOrientationMat9[0] = orientation.matrix[0]
+            shared_bodyOrientationMat9[1] = orientation.matrix[3]
+            shared_bodyOrientationMat9[2] = orientation.matrix[6]
+            shared_bodyOrientationMat9[3] = orientation.matrix[1]
+            shared_bodyOrientationMat9[4] = orientation.matrix[4]
+            shared_bodyOrientationMat9[5] = orientation.matrix[7]
+            shared_bodyOrientationMat9[6] = orientation.matrix[2]
+            shared_bodyOrientationMat9[7] = orientation.matrix[5]
+            shared_bodyOrientationMat9[8] = orientation.matrix[8]
 
             # Compute world velocity.
             if (shared_timestamp.value == -1):
@@ -113,7 +121,7 @@ class QualisysClient():
                 shared_bodyVelocity[0] = (position[0] - last_position[0])/dt
                 shared_bodyVelocity[1] = (position[1] - last_position[1])/dt
                 shared_bodyVelocity[2] = (position[2] - last_position[2])/dt
-                bodyAngularVelocity = log(se3.rotation.T.dot(last_se3.rotation))/dt
+                bodyAngularVelocity = log(last_se3.rotation.T.dot(se3.rotation))/dt
                 shared_bodyAngularVelocity[0] = bodyAngularVelocity[0]
                 shared_bodyAngularVelocity[1] = bodyAngularVelocity[1]
                 shared_bodyAngularVelocity[2] = bodyAngularVelocity[2]
