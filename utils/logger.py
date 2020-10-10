@@ -12,20 +12,27 @@ class Logger():
         nb_motors = device.nb_motors
 
         # Allocate the data:
+        # IMU and actuators:
         self.q_mes = np.zeros([logSize, nb_motors])
         self.v_mes = np.zeros([logSize, nb_motors])
         self.torquesFromCurrentMeasurment = np.zeros([logSize, nb_motors])
         self.baseOrientation = np.zeros([logSize, 4])
         self.baseAngularVelocity = np.zeros([logSize, 3])
         self.baseLinearAcceleration = np.zeros([logSize, 3])
+        self.baseAccelerometer = np.zeros([logSize, 3])
 
+        # Motion capture:
         self.mocapPosition = np.zeros([logSize, 3])
         self.mocapVelocity = np.zeros([logSize, 3])
         self.mocapAngularVelocity = np.zeros([logSize, 3])
         self.mocapOrientationMat9 = np.zeros([logSize, 3, 3])
         self.mocapOrientationQuat = np.zeros([logSize, 4])
 
+        # Estimator:
+        self.estimatorHeight = np.zeros([logSize, 1])
         self.estimatorVelocity = np.zeros([logSize, 3])
+        self.contactStatus = np.zeros([logSize, 4])
+        self.referenceVelocity = np.zeros([logSize, 6])
 
     def sample(self, device, qualisys=None, estimator=None):
         if (self.i >= self.logSize):
@@ -39,6 +46,7 @@ class Logger():
         self.baseOrientation[self.i] = device.baseOrientation
         self.baseAngularVelocity[self.i] = device.baseAngularVelocity
         self.baseLinearAcceleration[self.i] = device.baseLinearAcceleration
+        self.baseAccelerometer[self.i] = device.baseAccelerometer
         self.torquesFromCurrentMeasurment[self.i] = device.torquesFromCurrentMeasurment
         # Logging from qualisys
         if qualisys is not None:
@@ -49,7 +57,10 @@ class Logger():
             self.mocapOrientationQuat[self.i] = qualisys.getOrientationQuat()
         # Logging from the estimator
         if estimator is not None:
+            self.estimatorHeight[self.i] = estimator.FK_h
             self.estimatorVelocity[self.i] = estimator.v_filt[0:3, 0]
+            self.contactStatus[self.i] = estimator.contactStatus
+            self.referenceVelocity[self.i] = estimator.v_ref.ravel()
         self.i += 1
 
     def saveAll(self, fileName="data"):
@@ -62,9 +73,13 @@ class Logger():
                  baseOrientation=self.baseOrientation,
                  baseAngularVelocity=self.baseAngularVelocity,
                  baseLinearAcceleration=self.baseLinearAcceleration,
+                 baseAccelerometer=self.baseAccelerometer,
                  mocapPosition=self.mocapPosition,
                  mocapVelocity=self.mocapVelocity,
                  mocapAngularVelocity=self.mocapAngularVelocity,
                  mocapOrientationMat9=self.mocapOrientationMat9,
                  mocapOrientationQuat=self.mocapOrientationQuat,
-                 estimatorVelocity=self.estimatorVelocity)
+                 estimatorHeight=self.estimatorHeight,
+                 estimatorVelocity=self.estimatorVelocity,
+                 contactStatus=self.contactStatus,
+                 referenceVelocity=self.referenceVelocity)
