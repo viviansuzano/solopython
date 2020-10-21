@@ -33,6 +33,7 @@ class Logger():
         self.estimatorVelocity = np.zeros([logSize, 3])
         self.contactStatus = np.zeros([logSize, 4])
         self.referenceVelocity = np.zeros([logSize, 6])
+        self.logXFMPC = np.zeros([logSize, 24])
 
     def sample(self, device, qualisys=None, estimator=None):
         if (self.i >= self.logSize):
@@ -61,6 +62,7 @@ class Logger():
             self.estimatorVelocity[self.i] = estimator.v_filt[0:3, 0]
             self.contactStatus[self.i] = estimator.contactStatus
             self.referenceVelocity[self.i] = estimator.v_ref.ravel()
+            self.logXFMPC[self.i] = estimator.x_f_mpc.ravel()
         self.i += 1
 
     def saveAll(self, fileName="data"):
@@ -82,4 +84,5 @@ class Logger():
                  estimatorHeight=self.estimatorHeight,
                  estimatorVelocity=self.estimatorVelocity,
                  contactStatus=self.contactStatus,
-                 referenceVelocity=self.referenceVelocity)
+                 referenceVelocity=self.referenceVelocity,
+                 logXFMPC=self.logXFMPC)
