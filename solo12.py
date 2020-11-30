@@ -15,7 +15,7 @@ class Solo12(RobotHAL):
         self.motorKt = np.array(self.nb_motors * [0.025, ])  # Nm/A
         self.motorSign = np.array([-1, +1, -1, -1, +1, +1,
                                    -1, +1, -1, -1, +1, +1])
-        self.maximumCurrent = 5.0  # A
+        self.maximumCurrent = 12.0  # A
         # To get this offsets, run the calibration with self.encoderOffsets at 0,
         # then manualy move the robot in zero config, and paste the position here (note the negative sign!)
         #self.encoderOffsets = - np.array([1.940310, -2.658198, -2.893262, -1.918342,
