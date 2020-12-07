@@ -1,7 +1,7 @@
 '''This class will log 1d array in Nd matrix from device and qualisys object'''
 import numpy as np
 from datetime import datetime as datetime
-from time import clock
+from time import time
 
 class Logger():
     def __init__(self, device, qualisys=None, logSize=60e3, ringBuffer=False):
@@ -93,7 +93,7 @@ class Logger():
             self.v_filt[self.i] = estimator.v_filt[:, 0]
 
         # Logging timestamp
-        self.tstamps[self.i] = clock()
+        self.tstamps[self.i] = time()
 
         self.i += 1
 
