@@ -76,6 +76,13 @@ class Logger():
             self.mocapAngularVelocity[self.i] = qualisys.getAngularVelocity()
             self.mocapOrientationMat9[self.i] = qualisys.getOrientationMat9()
             self.mocapOrientationQuat[self.i] = qualisys.getOrientationQuat()
+        else:  # Logging from PyBullet simulator through fake device
+            self.mocapPosition[self.i] = device.baseState[0]
+            self.mocapVelocity[self.i] = device.baseVel[0]
+            self.mocapAngularVelocity[self.i] = device.baseVel[1]
+            self.mocapOrientationMat9[self.i] = device.rot_oMb
+            self.mocapOrientationQuat[self.i] = device.baseState[1]
+
         # Logging from the estimator
         if estimator is not None:
             self.estimatorHeight[self.i] = estimator.FK_h
