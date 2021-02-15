@@ -2,6 +2,7 @@ import numpy as np
 from IPython import embed
 from matplotlib import pyplot as plt
 from solo_estimator import BaseEstimator
+from example_robot_data.robots_loader import load_full
 data = np.load("/tmp/data_main_solo12_estimation.npz")
 # data = np.load("data_main_solo12_estimation_with_control.npz")
 # data = np.load("data_main_solo12_estimation.npz")
@@ -35,7 +36,8 @@ for i in range(1,N):
 
 velocityKinematic =  np.zeros([4,N,3])
 
-be = BaseEstimator(urdf="/opt/openrobots/lib/python3.5/site-packages/../../../share/example-robot-data/robots/solo_description/robots/solo12.urdf",modelPath="/opt/openrobots/lib/python3.5/site-packages/../../../share/example-robot-data/robots",contactFrameNames = ['HR_FOOT', 'HL_FOOT', 'FR_FOOT', 'FL_FOOT'])
+robot, q0, urdf, srdf = load_full('solo12')
+be = BaseEstimator(urdf=urdf,modelPath='/'.join(urdf.split('/')[:-3]),contactFrameNames = ['HR_FOOT', 'HL_FOOT', 'FR_FOOT', 'FL_FOOT'])
 
 #example of use:
 for i in range(N):

@@ -47,6 +47,7 @@ class RobotHAL():
         self.baseAngularVelocity = np.zeros(3)
         self.baseOrientation = np.array([0., 0., 0., 1.])
         self.baseLinearAcceleration = np.zeros(3)
+        self.baseAccelerometer = np.zeros(3)
         self.hardware = mbs.MasterBoardInterface(interfaceName)
         self.calibCtrl = CalibrationController(self.hardware, self.nb_motors, self.dt, Kd=0.01, Kp=3.0 ,searchStrategy=searchStrategy)
         self.gotoCtrl = GotoController(self.hardware, self.nb_motors, self.dt, Kd=0.01, Kp=3.0)
@@ -203,6 +204,10 @@ class RobotHAL():
         # Linear Acceleration of the base from IMU Estimation Filter, note the rotation !                                                 
         self.baseLinearAcceleration[:] = self.rotateImuVectors(
             [self.hardware.imu_data_linear_acceleration(0), self.hardware.imu_data_linear_acceleration(1), self.hardware.imu_data_linear_acceleration(2)])
+
+        # Acceleration of the base from IMU (with gravity), note the rotation !
+        self.baseAccelerometer[:] = self.rotateImuVectors(
+            [self.hardware.imu_data_accelerometer(0), self.hardware.imu_data_accelerometer(1), self.hardware.imu_data_accelerometer(2)])
 
         return
 

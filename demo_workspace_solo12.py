@@ -2,7 +2,7 @@
 import numpy as np
 import argparse
 from solo12 import Solo12
-from pynput import keyboard
+import threading
 
 from utils.logger import Logger
 from utils.qualisysClient import QualisysClient
@@ -80,6 +80,11 @@ def on_press(key):
     except AttributeError:
         print('Unknown key {0} pressed'.format(key))
 
+def get_input():
+    global key_pressed
+    keystrk=input('Put the robot on the floor and press Enter \n')
+    # thread doesn't continue until key is pressed
+    key_pressed=True
 
 def put_on_the_floor(device, q_init):
     """Make the robot go to the default initial position and wait for the user
@@ -97,9 +102,8 @@ def put_on_the_floor(device, q_init):
     pos = np.zeros(device.nb_motors)
     for motor in range(device.nb_motors):
         pos[motor] = q_init[device.motorToUrdf[motor]] * device.gearRatioSigned[motor]
-    listener = keyboard.Listener(on_press=on_press)
-    listener.start()
-    print("Put the robot on the floor and press Enter")
+    i=threading.Thread(target=get_input)
+    i.start()
     while not key_pressed:
         device.UpdateMeasurment()
         for motor in range(device.nb_motors):
@@ -119,8 +123,8 @@ def mcapi_playback(name_interface):
         name_interface (string): name of the interface that is used to communicate with the robot
     """
     device = Solo12(name_interface, dt=DT)
-    qc = QualisysClient(ip="140.93.16.160", body_id=0)  # QualisysClient
-    logger = Logger(device, qualisys=qc)  # Logger object
+    # qc = QualisysClient(ip="140.93.16.160", body_id=0)  # QualisysClient
+    # logger = Logger(device, qualisys=qc)  # Logger object
     nb_motors = device.nb_motors
 
     # Default position after calibration

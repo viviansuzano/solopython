@@ -4,6 +4,9 @@ from ctypes import c_double
 import pinocchio as pin
 import numpy as np
 import time
+from example_robot_data.robots_loader import load
+
+
 class NonBlockingViewerFromRobot():
     def __init__(self,robot,dt=0.01):
         # a shared c_double array
@@ -11,7 +14,7 @@ class NonBlockingViewerFromRobot():
         self.shared_q_viewer = Array(c_double, robot.nq, lock=False)
         self.p = Process(target=self.display_process, args=(robot, self.shared_q_viewer))
         self.p.start()
-        
+
     def display_process(self,robot, shared_q_viewer):
         ''' This will run on a different process'''
         q_viewer = robot.q0.copy()
@@ -24,7 +27,7 @@ class NonBlockingViewerFromRobot():
     def display(self,q):
         for i in range(len(self.shared_q_viewer)):
             self.shared_q_viewer[i] = q[i]
-    
+
 
     def stop(self):
         self.p.terminate()
@@ -32,12 +35,10 @@ class NonBlockingViewerFromRobot():
 
 
 class viewerClient():
-    def __init__(self,urdf="/opt/openrobots/share/example-robot-data/robots/solo_description/robots/solo12.urdf",modelPath="/opt/openrobots/share/example-robot-data/robots",dt=0.01):
-        pin.switchToNumpyMatrix()
-        robot = pin.RobotWrapper.BuildFromURDF( urdf, modelPath, pin.JointModelFreeFlyer())
-        robot.initViewer(loadModel=True)
+    def __init__(self,dt=0.01):
+        robot = load('solo12', display=True)
         if ('viewer' in robot.viz.__dict__):
-            robot.viewer.gui.setRefreshIsSynchronous(False)        
+            robot.viewer.gui.setRefreshIsSynchronous(False)
         self.nbv = NonBlockingViewerFromRobot(robot,dt)
 
     def display(self,q):
