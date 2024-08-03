@@ -2,7 +2,7 @@
 import numpy as np
 import argparse
 import math
-from time import clock, sleep
+from time import perf_counter, sleep
 from utils.viewerClient import viewerClient
 from solo8 import Solo8
 
@@ -15,7 +15,8 @@ def example_script(name_interface):
 
     device.Init(calibrateEncoders=False)
     #CONTROL LOOP ***************************************************
-    while ((not device.hardware.IsTimeout()) and (clock() < 200)):
+    start_time = perf_counter()
+    while ((not device.hardware.IsTimeout()) and (perf_counter() - start_time < 200)):
         device.UpdateMeasurment()
         device.SetDesiredJointTorque([0]*nb_motors)
         device.SendCommand(WaitEndOfCycle=True)

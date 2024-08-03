@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from time import clock
+from time import perf_counter
 from masterboard_utils import CalibrationController, mbs, GotoController
 
 
@@ -22,8 +22,8 @@ class RobotHAL():
         # to be in [-2pi;+2pi]
         self.encoderOffsets = np.fmod(self.encoderOffsets, 2*np.pi)
         # to be in [-pi;+pi]
-        self.encoderOffsets[self.encoderOffsets > +np.pi] -= 2*np.pi
-        self.encoderOffsets[self.encoderOffsets < -np.pi] += 2*np.pi
+        # self.encoderOffsets[self.encoderOffsets > +np.pi] -= 2*np.pi
+        # self.encoderOffsets[self.encoderOffsets < -np.pi] += 2*np.pi
 
         for i in range(self.nb_motors):
             if (self.encoderOffsets[i] > (np.pi/2.0)):
@@ -255,8 +255,8 @@ class RobotHAL():
     def WaitEndOfCycle(self):
         '''This Blocking fuction will wait for the end of timestep cycle (dt).'''
         while(1):
-            if((clock() - self.last) >= self.dt):
-                self.last = clock()
+            if((perf_counter() - self.last) >= self.dt):
+                self.last = perf_counter()
                 self.cpt += 1
                 self.t += self.dt
                 return

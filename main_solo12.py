@@ -2,7 +2,7 @@
 
 import argparse
 import math
-from time import clock, sleep
+from time import perf_counter, sleep
 from utils.slider_box import SliderBox
 from solo12 import Solo12
 
@@ -13,7 +13,8 @@ def example_script(name_interface):
 
     device.init(calibrateEncoders=True)
     #CONTROL LOOP ***************************************************
-    while ((not device.hardware.IsTimeout()) and (clock() < 200) and not slider_box.get_e_stop()):
+    start_time = perf_counter()
+    while ((not device.hardware.IsTimeout()) and (perf_counter() - start_time< 200) and not slider_box.get_e_stop()):
         device.UpdateMeasurment()
         device.SetDesiredJointTorque([0]*nb_motors)
         device.SendCommand(WaitEndOfCycle=True)

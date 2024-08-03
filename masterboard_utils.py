@@ -1,7 +1,7 @@
 import numpy as np
 import libmaster_board_sdk_pywrap as mbs
 import sys
-from time import clock, sleep
+from time import perf_counter, sleep
 import math
 '''This file collects a set of usefull functions to maniputate a master_board_sdk object'''
 class GotoController():
@@ -110,7 +110,7 @@ class CalibrationController():
                         self.control[motor] = 0
                         self.state[motor] = self.CALIBRATION_DONE
                     else:
-                        T=2.0
+                        T=5.0
                         if (self.searchStrategy[motor] == self.ALTERNATIVE):
                             if (self.t<T/2.0):
                                 calib_traj = self.InitialPosition[motor]+1.2*math.pi*0.5*(1-math.cos(2*math.pi*(1./T)*self.t))

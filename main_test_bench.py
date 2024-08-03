@@ -2,7 +2,7 @@
 import numpy as np
 import argparse
 import math
-from time import clock, sleep
+from time import perf_counter, sleep
 from test_bench import TestBench
 
 def example_script(name_interface):
@@ -18,7 +18,8 @@ def example_script(name_interface):
     device.Init(calibrateEncoders=True)
     device.t = 0 # reset time for the sinus to begin at 0
     #CONTROL LOOP ***************************************************
-    while ((not device.hardware.IsTimeout()) and (clock() < 200)):
+    start_time = perf_counter()
+    while ((not device.hardware.IsTimeout()) and (perf_counter() - start_time < 200)):
         device.UpdateMeasurment()
 
         torques = [0]*nb_motors
